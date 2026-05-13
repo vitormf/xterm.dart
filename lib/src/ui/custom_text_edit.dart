@@ -175,6 +175,15 @@ class CustomTextEditState extends State<CustomTextEdit> with TextInputClient {
       // setEditableRect(Rect.zero, Rect.zero);
 
       _connection!.setEditingState(_initEditingState);
+      // The platform honors this initial reset (the dropped-reset behaviour
+      // only kicks in once a composing-commit has flowed through the
+      // connection). Realign our local mirrors so the diff in
+      // `updateEditingValue` starts from the same baseline — otherwise a
+      // close/reopen cycle (e.g. switching tabs and coming back) leaves
+      // `_seenText` carrying the previous session's length and silently
+      // drops the next keystroke when `newText.length` doesn't exceed it.
+      _seenText = _initEditingState.text;
+      _currentEditingState = _initEditingState.copyWith();
     }
   }
 

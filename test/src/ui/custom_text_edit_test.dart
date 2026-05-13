@@ -6,13 +6,19 @@ import 'package:xterm/src/ui/custom_text_edit.dart';
 /// Pumps a [CustomTextEdit] in the non-deleteDetection path and returns the
 /// state plus the inserted-text log so each test can drive the
 /// [TextInputClient] surface directly.
-Future<({CustomTextEditState state, List<String> inserts})> _pump(
+Future<
+    ({
+      CustomTextEditState state,
+      List<String> inserts,
+      List<void> deletes,
+    })> _pump(
   WidgetTester tester,
 ) async {
   final focusNode = FocusNode();
   addTearDown(focusNode.dispose);
   final key = GlobalKey<CustomTextEditState>();
   final inserts = <String>[];
+  final deletes = <void>[];
 
   await tester.pumpWidget(MaterialApp(
     home: Material(
@@ -20,7 +26,7 @@ Future<({CustomTextEditState state, List<String> inserts})> _pump(
         key: key,
         focusNode: focusNode,
         onInsert: inserts.add,
-        onDelete: () {},
+        onDelete: () => deletes.add(null),
         onComposing: (_) {},
         onAction: (_) {},
         onKeyEvent: (_, __) => KeyEventResult.ignored,
@@ -33,7 +39,7 @@ Future<({CustomTextEditState state, List<String> inserts})> _pump(
   focusNode.requestFocus();
   await tester.pump();
 
-  return (state: key.currentState!, inserts: inserts);
+  return (state: key.currentState!, inserts: inserts, deletes: deletes);
 }
 
 void main() {
@@ -41,7 +47,7 @@ void main() {
     testWidgets(
       'emits each char as the platform-mirror text grows',
       (tester) async {
-        final (:state, :inserts) = await _pump(tester);
+        final (:state, :inserts, :deletes) = await _pump(tester);
         state.updateEditingValue(const TextEditingValue(
           text: 'a',
           selection: TextSelection.collapsed(offset: 1),
@@ -55,6 +61,44 @@ void main() {
           selection: TextSelection.collapsed(offset: 3),
         ));
         expect(inserts, ['a', 'b', 'c']);
+        expect(deletes, isEmpty);
+      },
+    );
+
+    testWidgets(
+      // Regression: 06ea1ca dropped the per-event "reset platform to
+      // _initEditingState" call in the non-deleteDetection branch, so the
+      // platform's text field now accumulates instead of being cleared
+      // after each insert. On Android (the client uses deleteDetection=false
+      // with keyboardType=visiblePassword), the IME sees a non-empty field
+      // and intercepts backspace itself — sending a shorter
+      // TextEditingValue rather than a hardware DEL key event. Without
+      // shrinkage detection, that backspace was silently dropped.
+      'emits onDelete when the platform-mirror text shrinks (backspace)',
+      (tester) async {
+        final (:state, :inserts, :deletes) = await _pump(tester);
+        // Prime the mirror.
+        state.updateEditingValue(const TextEditingValue(
+          text: 'abc',
+          selection: TextSelection.collapsed(offset: 3),
+        ));
+        expect(inserts, ['abc']);
+        expect(deletes, isEmpty);
+
+        // IME-intercepted backspace: field shrinks by one char.
+        state.updateEditingValue(const TextEditingValue(
+          text: 'ab',
+          selection: TextSelection.collapsed(offset: 2),
+        ));
+        expect(deletes.length, 1);
+
+        // Multi-char shrink (e.g. user deletes a word) emits one onDelete
+        // per removed character.
+        state.updateEditingValue(const TextEditingValue(
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
+        ));
+        expect(deletes.length, 3);
       },
     );
 
@@ -68,7 +112,7 @@ void main() {
       // silently dropped against a stale `_seenText` of length 3.
       'first keystroke after focus loss+regain is still emitted',
       (tester) async {
-        final (:state, :inserts) = await _pump(tester);
+        final (:state, :inserts, :deletes) = await _pump(tester);
         // Prime the mirror with three chars worth of accumulated state.
         state.updateEditingValue(const TextEditingValue(
           text: 'abc',

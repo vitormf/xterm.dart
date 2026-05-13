@@ -269,6 +269,18 @@ class CustomTextEditState extends State<CustomTextEdit> with TextInputClient {
     final newText = _currentEditingState.text;
     if (newText.length > _seenText.length) {
       widget.onInsert(newText.substring(_seenText.length));
+    } else if (newText.length < _seenText.length) {
+      // The platform-side field shrank without a hardware key event — the
+      // IME intercepted a backspace and deleted from its own buffer.
+      // Android does this in the default visiblePassword mode whenever the
+      // field is non-empty (and post-06ea1ca it stays non-empty, because
+      // we no longer reset it to "" after each insert). Emit one onDelete
+      // per removed character so the terminal sees the backspace it would
+      // have seen via the hardware key path before the accumulation change.
+      final deletes = _seenText.length - newText.length;
+      for (var i = 0; i < deletes; i++) {
+        widget.onDelete();
+      }
     }
     _seenText = newText;
   }

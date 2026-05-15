@@ -153,6 +153,11 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
   var _stickToBottom = true;
 
+  /// When false, the stick-to-bottom snap in [performLayout] is skipped even
+  /// if [_stickToBottom] is true. Set to false while the host is mid-drag to
+  /// prevent new output from snapping the view and disrupting text selection.
+  var stickyScrollEnabled = true;
+
   void _onScroll() {
     _stickToBottom = _scrollOffset >= _maxScrollExtent;
     markNeedsLayout();
@@ -212,7 +217,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
     _updateScrollOffset();
 
-    if (_stickToBottom) {
+    if (_stickToBottom && stickyScrollEnabled) {
       _offset.correctBy(_maxScrollExtent - _scrollOffset);
     }
   }

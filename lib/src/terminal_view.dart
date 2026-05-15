@@ -166,6 +166,13 @@ class TerminalViewState extends State<TerminalView> {
   RenderTerminal get renderTerminal =>
       _viewportKey.currentContext!.findRenderObject() as RenderTerminal;
 
+  /// Enable or disable the stick-to-bottom snap in [RenderTerminal.performLayout].
+  /// Pass false while the host is dragging to prevent new terminal output from
+  /// scrolling the view; restore to true on pointer-up.
+  void setStickyScroll(bool enabled) {
+    renderTerminal.stickyScrollEnabled = enabled;
+  }
+
   @override
   void initState() {
     _focusNode = widget.focusNode ?? FocusNode();

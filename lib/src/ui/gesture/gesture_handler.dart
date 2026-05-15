@@ -177,9 +177,24 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   void onDragStart(DragStartDetails details) {
     _lastDragStartDetails = details;
 
-    details.kind == PointerDeviceKind.mouse
-        ? renderTerminal.selectCharacters(details.localPosition)
-        : renderTerminal.selectWord(details.localPosition);
+    if (details.kind == PointerDeviceKind.mouse) {
+      renderTerminal.selectCharacters(details.localPosition);
+      // The TapGestureRecognizer fires onTapDown immediately (before gesture
+      // arena resolution), which may have sent a mouse-down to the terminal
+      // app. Since the pan recognizer won, onSingleTapUp will never fire, so
+      // the app would be left with a dangling mouse-down state. Cancel it now
+      // so the app (e.g. Claude Code TUI) doesn't treat the drag as an
+      // app-level pointer operation.
+      if (_shouldSendTapEvent) {
+        renderTerminal.mouseEvent(
+          TerminalMouseButton.left,
+          TerminalMouseButtonState.up,
+          details.localPosition,
+        );
+      }
+    } else {
+      renderTerminal.selectWord(details.localPosition);
+    }
   }
 
   void onDragUpdate(DragUpdateDetails details) {

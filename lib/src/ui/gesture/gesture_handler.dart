@@ -126,6 +126,14 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   }
 
   void onTapDown(TapDownDetails details) {
+    if (details.kind == PointerDeviceKind.mouse) {
+      // For mouse pointers, defer the mouse-down event to onSingleTapUp so
+      // that click-drags don't send a dangling mouse-down to the terminal
+      // app before the gesture is confirmed as a tap. The callback (focus /
+      // selection-clear) still fires immediately via forceCallback semantics.
+      widget.onTapDown?.call(details);
+      return;
+    }
     // onTapDown is special, as it will always call the supplied callback.
     // The TerminalView depends on it to bring the terminal into focus.
     _tapDown(
@@ -137,6 +145,15 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   }
 
   void onSingleTapUp(TapUpDetails details) {
+    if (details.kind == PointerDeviceKind.mouse && _shouldSendTapEvent) {
+      // Send the deferred mouse-down immediately before the mouse-up, so
+      // the terminal app sees a proper down+up pair for confirmed clicks.
+      renderTerminal.mouseEvent(
+        TerminalMouseButton.left,
+        TerminalMouseButtonState.down,
+        details.localPosition,
+      );
+    }
     _tapUp(widget.onSingleTapUp, details, TerminalMouseButton.left);
   }
 
@@ -177,24 +194,9 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   void onDragStart(DragStartDetails details) {
     _lastDragStartDetails = details;
 
-    if (details.kind == PointerDeviceKind.mouse) {
-      renderTerminal.selectCharacters(details.localPosition);
-      // The TapGestureRecognizer fires onTapDown immediately (before gesture
-      // arena resolution), which may have sent a mouse-down to the terminal
-      // app. Since the pan recognizer won, onSingleTapUp will never fire, so
-      // the app would be left with a dangling mouse-down state. Cancel it now
-      // so the app (e.g. Claude Code TUI) doesn't treat the drag as an
-      // app-level pointer operation.
-      if (_shouldSendTapEvent) {
-        renderTerminal.mouseEvent(
-          TerminalMouseButton.left,
-          TerminalMouseButtonState.up,
-          details.localPosition,
-        );
-      }
-    } else {
-      renderTerminal.selectWord(details.localPosition);
-    }
+    details.kind == PointerDeviceKind.mouse
+        ? renderTerminal.selectCharacters(details.localPosition)
+        : renderTerminal.selectWord(details.localPosition);
   }
 
   void onDragUpdate(DragUpdateDetails details) {

@@ -174,7 +174,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   }
 
   void _onControllerUpdate() {
-    markNeedsLayout();
+    markNeedsPaint();
   }
 
   @override

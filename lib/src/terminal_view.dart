@@ -49,6 +49,7 @@ class TerminalView extends StatefulWidget {
     this.readOnly = false,
     this.hardwareKeyboardOnly = false,
     this.simulateScroll = true,
+    this.enableSelectionGestures = true,
   });
 
   /// The underlying terminal that this widget renders.
@@ -141,6 +142,10 @@ class TerminalView extends StatefulWidget {
   /// keys to the application. This is standard behavior for most terminal
   /// emulators. True by default.
   final bool simulateScroll;
+
+  /// If true (default), drag and long-press gestures will perform text
+  /// selection. Set to false to let the parent widget own the gesture pipeline.
+  final bool enableSelectionGestures;
 
   @override
   State<TerminalView> createState() => TerminalViewState();
@@ -313,6 +318,7 @@ class TerminalViewState extends State<TerminalView> {
       onSecondaryTapUp:
           widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
       readOnly: widget.readOnly,
+      enableSelectionGestures: widget.enableSelectionGestures,
       child: child,
     );
 

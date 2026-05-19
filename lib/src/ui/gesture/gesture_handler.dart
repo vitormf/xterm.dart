@@ -22,6 +22,7 @@ class TerminalGestureHandler extends StatefulWidget {
     this.onTertiaryTapDown,
     this.onTertiaryTapUp,
     this.readOnly = false,
+    this.enableSelectionGestures = true,
   });
 
   final TerminalViewState terminalView;
@@ -45,6 +46,8 @@ class TerminalGestureHandler extends StatefulWidget {
   final GestureTapUpCallback? onTertiaryTapUp;
 
   final bool readOnly;
+
+  final bool enableSelectionGestures;
 
   @override
   State<TerminalGestureHandler> createState() => _TerminalGestureHandlerState();
@@ -178,11 +181,13 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   }
 
   void onLongPressStart(LongPressStartDetails details) {
+    if (!widget.enableSelectionGestures) return;
     _lastLongPressStartDetails = details;
     renderTerminal.selectWord(details.localPosition);
   }
 
   void onLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
+    if (!widget.enableSelectionGestures) return;
     renderTerminal.selectWord(
       _lastLongPressStartDetails!.localPosition,
       details.localPosition,
@@ -192,6 +197,7 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   // void onLongPressUp() {}
 
   void onDragStart(DragStartDetails details) {
+    if (!widget.enableSelectionGestures) return;
     _lastDragStartDetails = details;
 
     details.kind == PointerDeviceKind.mouse
@@ -200,6 +206,7 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
   }
 
   void onDragUpdate(DragUpdateDetails details) {
+    if (!widget.enableSelectionGestures) return;
     renderTerminal.selectCharacters(
       _lastDragStartDetails!.localPosition,
       details.localPosition,

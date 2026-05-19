@@ -188,10 +188,9 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
 
   void onLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
     if (!widget.enableSelectionGestures) return;
-    renderTerminal.selectWord(
-      _lastLongPressStartDetails!.localPosition,
-      details.localPosition,
-    );
+    final start = _lastLongPressStartDetails;
+    if (start == null) return;
+    renderTerminal.selectWord(start.localPosition, details.localPosition);
   }
 
   // void onLongPressUp() {}
@@ -207,9 +206,8 @@ class _TerminalGestureHandlerState extends State<TerminalGestureHandler> {
 
   void onDragUpdate(DragUpdateDetails details) {
     if (!widget.enableSelectionGestures) return;
-    renderTerminal.selectCharacters(
-      _lastDragStartDetails!.localPosition,
-      details.localPosition,
-    );
+    final start = _lastDragStartDetails;
+    if (start == null) return;
+    renderTerminal.selectCharacters(start.localPosition, details.localPosition);
   }
 }

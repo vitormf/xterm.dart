@@ -104,6 +104,16 @@ void main() {
     });
   });
 
+  group('BufferLine.eraseRange', () {
+    test('does not crash when end is 0 (cursor at column 0)', () {
+      final terminal = Terminal();
+      // ESC [1K erases from start of line to cursor. If cursor is at column 0,
+      // eraseRange(0, 0, ...) was calling getWidth(-1) and crashing.
+      terminal.write('\x1b[1K');
+      expect(terminal.buffer.lines[0].getText(), '');
+    });
+  });
+
   group('Buffer.createAnchor', () {
     test('works', () {
       final terminal = Terminal();

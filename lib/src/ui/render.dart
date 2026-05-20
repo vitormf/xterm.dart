@@ -158,8 +158,17 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   /// prevent new output from snapping the view and disrupting text selection.
   var stickyScrollEnabled = true;
 
+  /// The maxScrollExtent reported to the [ViewportOffset] at the last
+  /// [_updateScrollOffset] call. Used in [_onScroll] instead of the live
+  /// [_maxScrollExtent] to avoid a false "not at bottom" when terminal content
+  /// grows between frames: after correctBy() the scroll offset equals the
+  /// position's maxScrollExtent, but the live terminal max is already larger.
+  /// Comparing against the same value that jumpTo() used keeps [_stickToBottom]
+  /// true even when new output arrived since the last performLayout.
+  double _positionMaxScrollExtent = 0.0;
+
   void _onScroll() {
-    _stickToBottom = _scrollOffset >= _maxScrollExtent;
+    _stickToBottom = _scrollOffset >= _positionMaxScrollExtent;
     markNeedsLayout();
     _notifyEditableRect();
   }
@@ -363,6 +372,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   void _updateScrollOffset() {
     _offset.applyViewportDimension(_viewportHeight);
     _offset.applyContentDimensions(0, _maxScrollExtent);
+    _positionMaxScrollExtent = _maxScrollExtent;
   }
 
   bool get _isComposingText {

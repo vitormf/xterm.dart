@@ -90,6 +90,12 @@ class _TerminalGestureDetectorState extends State<TerminalGestureDetector> {
     _isDoubleTap = false;
   }
 
+  @override
+  void dispose() {
+    _doubleTapTimer?.cancel();
+    super.dispose();
+  }
+
   void _doubleTapTimeout() {
     _doubleTapTimer = null;
     _lastTapOffset = null;

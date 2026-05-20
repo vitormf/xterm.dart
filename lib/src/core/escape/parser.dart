@@ -497,9 +497,11 @@ class EscapeParser {
           handler.setForegroundColor16(NamedColor.white);
           continue;
         case 38:
+          if (i + 1 >= params.length) continue;
           final mode = params[i + 1];
           switch (mode) {
             case 2:
+              if (i + 4 >= params.length) break;
               final r = params[i + 2];
               final g = params[i + 3];
               final b = params[i + 4];
@@ -507,6 +509,7 @@ class EscapeParser {
               i += 4;
               break;
             case 5:
+              if (i + 2 >= params.length) break;
               final index = params[i + 2];
               handler.setForegroundColor256(index);
               i += 2;
@@ -542,9 +545,11 @@ class EscapeParser {
           handler.setBackgroundColor16(NamedColor.white);
           continue;
         case 48:
+          if (i + 1 >= params.length) continue;
           final mode = params[i + 1];
           switch (mode) {
             case 2:
+              if (i + 4 >= params.length) break;
               final r = params[i + 2];
               final g = params[i + 3];
               final b = params[i + 4];
@@ -552,6 +557,7 @@ class EscapeParser {
               i += 4;
               break;
             case 5:
+              if (i + 2 >= params.length) break;
               final index = params[i + 2];
               handler.setBackgroundColor256(index);
               i += 2;

@@ -903,4 +903,9 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   void unknownOSC(String ps, List<String> pt) {
     onPrivateOSC?.call(ps, pt);
   }
+
+  @override
+  void setHyperlink(String? uri) {
+    _buffer.setHyperlink(uri);
+  }
 }

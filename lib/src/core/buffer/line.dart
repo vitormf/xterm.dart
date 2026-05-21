@@ -37,6 +37,18 @@ class BufferLine with IndexedItem {
 
   List<CellAnchor> get anchors => _anchors;
 
+  Map<int, String>? _hyperlinks;
+
+  String? getHyperlink(int col) => _hyperlinks?[col];
+
+  void setHyperlink(int col, String? url) {
+    if (url == null || url.isEmpty) {
+      _hyperlinks?.remove(col);
+    } else {
+      (_hyperlinks ??= {})[col] = url;
+    }
+  }
+
   int getForeground(int index) {
     return _data[index * _cellSize + _cellForeground];
   }

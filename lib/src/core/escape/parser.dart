@@ -1078,6 +1078,12 @@ class EscapeParser {
         case '2':
           handler.setTitle(pt);
           return true;
+        case '8':
+          // OSC 8 ; params ; uri — hyperlink. Third field is the URI;
+          // empty URI signals end of hyperlink.
+          final uri = _osc.length >= 3 ? _osc[2] : null;
+          handler.setHyperlink(uri?.isEmpty == true ? null : uri);
+          return true;
       }
     }
 

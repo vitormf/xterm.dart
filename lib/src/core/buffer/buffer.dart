@@ -39,6 +39,12 @@ class Buffer {
 
   int _cursorY = 0;
 
+  String? _currentHyperlink;
+
+  void setHyperlink(String? url) {
+    _currentHyperlink = url == null || url.isEmpty ? null : url;
+  }
+
   late int _marginTop;
 
   late int _marginBottom;
@@ -120,6 +126,7 @@ class Buffer {
 
     final line = currentLine;
     line.setCell(_cursorX, codePoint, cellWidth, terminal.cursor);
+    if (_currentHyperlink != null) line.setHyperlink(_cursorX, _currentHyperlink);
 
     if (_cursorX < viewWidth) {
       _cursorX++;

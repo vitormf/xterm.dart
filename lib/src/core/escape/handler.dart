@@ -212,4 +212,7 @@ abstract class EscapeHandler {
   void setIconName(String name);
 
   void unknownOSC(String code, List<String> args);
+
+  // OSC 8: hyperlink. null uri = end of hyperlink.
+  void setHyperlink(String? uri);
 }

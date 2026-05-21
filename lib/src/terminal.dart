@@ -213,6 +213,22 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
 
   bool get isUsingAltBuffer => _buffer == _altBuffer;
 
+  Buffer? _viewBufferOverride;
+
+  /// Sets the buffer rendered by [RenderTerminal] without changing the buffer
+  /// that receives new writes. Set to [mainBuffer] to overlay scrollback history
+  /// while an alt-screen app is active. Set to null to resume rendering the
+  /// active write buffer.
+  set viewBuffer(Buffer? b) {
+    _viewBufferOverride = b;
+    notifyListeners();
+  }
+
+  /// The buffer rendered by [RenderTerminal]. Normally equals [buffer] but
+  /// can be overridden via [viewBuffer] to show scrollback history while an
+  /// alt-screen app is writing to [altBuffer].
+  Buffer get displayBuffer => _viewBufferOverride ?? _buffer;
+
   /// Lines of the active buffer.
   IndexAwareCircularBuffer<BufferLine> get lines => _buffer.lines;
 
@@ -713,11 +729,13 @@ class Terminal with Observable implements TerminalState, EscapeHandler {
   @override
   void useAltBuffer() {
     _buffer = _altBuffer;
+    _viewBufferOverride = null;
   }
 
   @override
   void useMainBuffer() {
     _buffer = _mainBuffer;
+    _viewBufferOverride = null;
   }
 
   @override

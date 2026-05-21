@@ -233,7 +233,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
   /// Total height of the terminal in pixels. Includes scrollback buffer.
   double get _terminalHeight =>
-      _terminal.buffer.lines.length * _painter.cellSize.height;
+      _terminal.displayBuffer.lines.length * _painter.cellSize.height;
 
   /// The distance from the top of the terminal to the top of the viewport.
   // double get _scrollOffset => _offset.pixels;
@@ -263,7 +263,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     final col = x ~/ _painter.cellSize.width;
     return CellOffset(
       col.clamp(0, _terminal.viewWidth - 1),
-      row.clamp(0, _terminal.buffer.lines.length - 1),
+      row.clamp(0, _terminal.displayBuffer.lines.length - 1),
     );
   }
 
@@ -416,7 +416,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   void _paint(PaintingContext context, Offset offset) {
     final canvas = context.canvas;
 
-    final lines = _terminal.buffer.lines;
+    final lines = _terminal.displayBuffer.lines;
     final charHeight = _painter.cellSize.height;
 
     final firstLineOffset = _scrollOffset - _padding.top;
@@ -436,7 +436,8 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       );
     }
 
-    if (_terminal.buffer.absoluteCursorY >= effectFirstLine &&
+    if (_terminal.displayBuffer == _terminal.buffer &&
+        _terminal.buffer.absoluteCursorY >= effectFirstLine &&
         _terminal.buffer.absoluteCursorY <= effectLastLine) {
       if (_isComposingText) {
         _paintComposingText(canvas, offset + cursorOffset);
@@ -507,7 +508,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     int lastLine,
   ) {
     for (final segment in selection.toSegments()) {
-      if (segment.line >= _terminal.buffer.lines.length) {
+      if (segment.line >= _terminal.displayBuffer.lines.length) {
         break;
       }
 

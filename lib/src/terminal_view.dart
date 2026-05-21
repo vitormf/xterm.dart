@@ -175,7 +175,10 @@ class TerminalViewState extends State<TerminalView> {
   /// Pass false while the host is dragging to prevent new terminal output from
   /// scrolling the view; restore to true on pointer-up.
   void setStickyScroll(bool enabled) {
-    renderTerminal.stickyScrollEnabled = enabled;
+    // Use ?. so a transiently-null viewport context (e.g. during initial layout
+    // before the first frame) is a no-op rather than a crash.
+    (_viewportKey.currentContext?.findRenderObject() as RenderTerminal?)
+        ?.stickyScrollEnabled = enabled;
   }
 
   @override

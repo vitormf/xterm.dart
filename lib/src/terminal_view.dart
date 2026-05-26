@@ -50,6 +50,7 @@ class TerminalView extends StatefulWidget {
     this.hardwareKeyboardOnly = false,
     this.simulateScroll = true,
     this.enableSelectionGestures = true,
+    this.disableGestures = false,
   });
 
   /// The underlying terminal that this widget renders.
@@ -146,6 +147,11 @@ class TerminalView extends StatefulWidget {
   /// If true (default), drag and long-press gestures will perform text
   /// selection. Set to false to let the parent widget own the gesture pipeline.
   final bool enableSelectionGestures;
+
+  /// If true, xterm's internal gesture recognizers (tap, double-tap,
+  /// secondary/tertiary tap) are not installed. Use this when the host widget
+  /// owns the full gesture pipeline via a [Listener] or [GestureDetector].
+  final bool disableGestures;
 
   @override
   State<TerminalView> createState() => TerminalViewState();
@@ -311,19 +317,21 @@ class TerminalViewState extends State<TerminalView> {
       child: child,
     );
 
-    child = TerminalGestureHandler(
-      terminalView: this,
-      terminalController: _controller,
-      onTapUp: _onTapUp,
-      onTapDown: _onTapDown,
-      onSecondaryTapDown:
-          widget.onSecondaryTapDown != null ? _onSecondaryTapDown : null,
-      onSecondaryTapUp:
-          widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
-      readOnly: widget.readOnly,
-      enableSelectionGestures: widget.enableSelectionGestures,
-      child: child,
-    );
+    if (!widget.disableGestures) {
+      child = TerminalGestureHandler(
+        terminalView: this,
+        terminalController: _controller,
+        onTapUp: _onTapUp,
+        onTapDown: _onTapDown,
+        onSecondaryTapDown:
+            widget.onSecondaryTapDown != null ? _onSecondaryTapDown : null,
+        onSecondaryTapUp:
+            widget.onSecondaryTapUp != null ? _onSecondaryTapUp : null,
+        readOnly: widget.readOnly,
+        enableSelectionGestures: widget.enableSelectionGestures,
+        child: child,
+      );
+    }
 
     child = MouseRegion(
       cursor: widget.mouseCursor,

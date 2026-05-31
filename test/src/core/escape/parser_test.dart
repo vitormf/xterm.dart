@@ -15,6 +15,40 @@ void main() {
     });
   });
 
+  group('DCS (Device Control String)', () {
+    // Regression for vitormf/nimue#647.
+    // tmux responds to XTVERSION (CSI > q) with "ESC P > | tmux VERSION ESC \".
+    // Without DCS handling the raw bytes were passed to the output buffer and
+    // rendered literally as "^[P>|tmux...".
+    test('ESC P ... ESC \\ is consumed silently, unkownEscape never called', () {
+      final handler = MockEscapeHandler();
+      final parser = EscapeParser(handler);
+      expect(
+        () => parser.write('\x1bP>|tmux 3.6b\x1b\\'),
+        returnsNormally,
+      );
+      verifyNever(handler.unkownEscape(any));
+    });
+
+    test('DCS terminated by BEL is consumed silently', () {
+      final handler = MockEscapeHandler();
+      final parser = EscapeParser(handler);
+      expect(
+        () => parser.write('\x1bPsome data\x07'),
+        returnsNormally,
+      );
+      verifyNever(handler.unkownEscape(any));
+    });
+
+    test('DCS split across two writes is fully consumed', () {
+      final handler = MockEscapeHandler();
+      final parser = EscapeParser(handler);
+      parser.write('\x1bP>|tmux');
+      parser.write(' 3.6b\x1b\\');
+      verifyNever(handler.unkownEscape(any));
+    });
+  });
+
   group('SGR bounds check', () {
     test('truncated RGB foreground (ESC[38;2;R;Gm — missing blue) does not throw', () {
       final parser = EscapeParser(MockEscapeHandler());

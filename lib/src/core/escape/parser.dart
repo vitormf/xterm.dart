@@ -100,7 +100,7 @@ class EscapeParser {
     'E'.charCode: _escHandleNextLine,
     'H'.charCode: _escHandleTabSet,
     'M'.charCode: _escHandleReverseIndex,
-    // 'P'.charCode: _unsupportedHandler, // Sixel
+    'P'.charCode: _escHandleDCS,
     // 'c'.charCode: _unsupportedHandler,
     // '#'.charCode: _unsupportedHandler,
     '('.charCode: _escHandleDesignateCharset0, //  SCS - G0
@@ -1133,6 +1133,39 @@ class EscapeParser {
       }
 
       param.writeCharCode(char);
+    }
+  }
+
+  // DCS (Device Control String) — ESC P ... ESC \
+  //
+  // Consumed and discarded. tmux responds to XTVERSION (CSI > q) with a DCS
+  // string (e.g. "ESC P > | tmux 3.6b ESC \"). Without this handler the raw
+  // bytes pass through to the output buffer and render literally.
+  bool _escHandleDCS() {
+    return _consumeDcs();
+  }
+
+  bool _consumeDcs() {
+    while (true) {
+      if (_queue.isEmpty) {
+        return false;
+      }
+
+      final char = _queue.consume();
+
+      // DCS terminates with BEL
+      if (char == Ascii.BEL) {
+        return true;
+      }
+
+      // DCS terminates with ST (ESC \)
+      if (char == Ascii.ESC) {
+        if (_queue.isEmpty) {
+          return false;
+        }
+        _queue.consume(); // consume the backslash (or whatever follows ESC)
+        return true;
+      }
     }
   }
 }

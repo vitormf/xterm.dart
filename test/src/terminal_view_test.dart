@@ -200,7 +200,11 @@ void main() {
 
       final pointer = TestPointer(1, PointerDeviceKind.mouse);
 
+      // Mouse events are deferred to onSingleTapUp (commit 21e0923) so that
+      // click-drags don't send a dangling mouse-down to the terminal app.
+      // Send both down and up to simulate a confirmed tap.
       await tester.sendEventToBinding(pointer.down(Offset(1, 1)));
+      await tester.sendEventToBinding(pointer.up());
 
       await tester.pumpAndSettle();
 

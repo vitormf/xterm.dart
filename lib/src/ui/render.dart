@@ -358,12 +358,17 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   /// Notify the underlying terminal that the viewport size has changed.
   void _resizeTerminalIfNeeded() {
     if (_autoResize && _viewportSize != null) {
+      final prevCols = _terminal.viewWidth;
+      final prevRows = _terminal.viewHeight;
       _terminal.resize(
         _viewportSize!.width,
         _viewportSize!.height,
         _painter.cellSize.width.round(),
         _painter.cellSize.height.round(),
       );
+      if (_terminal.viewWidth != prevCols || _terminal.viewHeight != prevRows) {
+        markNeedsPaint();
+      }
     }
   }
 

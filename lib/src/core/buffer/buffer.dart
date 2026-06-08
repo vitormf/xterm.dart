@@ -208,8 +208,9 @@ class Buffer {
 
   /// Erases [count] cells starting at the cursor position.
   void eraseChars(int count) {
-    final start = _cursorX;
-    currentLine.eraseRange(start, start + count, terminal.cursor);
+    final start = _cursorX.clamp(0, viewWidth);
+    final end = (start + count).clamp(0, viewWidth);
+    currentLine.eraseRange(start, end, terminal.cursor);
   }
 
   void scrollDown(int lines) {
@@ -337,8 +338,8 @@ class Buffer {
 
   /// Restore cursor position, charmap and text attributes.
   void restoreCursor() {
-    _cursorX = _savedCursorX;
-    _cursorY = _savedCursorY;
+    _cursorX = _savedCursorX.clamp(0, viewWidth - 1);
+    _cursorY = _savedCursorY.clamp(0, viewHeight - 1);
     terminal.cursor.foreground = _savedCursorStyle.foreground;
     terminal.cursor.background = _savedCursorStyle.background;
     terminal.cursor.attrs = _savedCursorStyle.attrs;

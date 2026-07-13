@@ -244,4 +244,24 @@ void main() {
       expect(terminal.buffer.lines[2].toString(), '');
     });
   });
+
+  group('scrollBack underflow (nimue#959)', () {
+    // `lines` is a circular buffer capped at maxLines, so when the viewport is
+    // taller than the buffer's content (viewHeight > maxLines) the buffer holds
+    // fewer lines than viewHeight. scrollBack (= height - viewHeight) then goes
+    // negative, making absoluteCursorY negative → lines[absoluteCursorY] throws
+    // `RangeError (index): ... : -N`. scrollBack is the number of lines scrolled
+    // off the top and is >= 0 by definition.
+    test('scrollBack and absoluteCursorY stay non-negative when height < viewHeight', () {
+      final terminal = Terminal(maxLines: 5); // < default viewHeight (24)
+      expect(terminal.buffer.height, lessThan(terminal.viewHeight));
+      expect(terminal.buffer.scrollBack, isNonNegative);
+      expect(terminal.buffer.absoluteCursorY, isNonNegative);
+    });
+
+    test('writing does not throw RangeError when height < viewHeight', () {
+      final terminal = Terminal(maxLines: 5);
+      expect(() => terminal.write('hello'), returnsNormally);
+    });
+  });
 }

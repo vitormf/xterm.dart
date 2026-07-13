@@ -85,8 +85,12 @@ class Buffer {
   /// Index of the last line in the scroll region.
   int get marginBottom => _marginBottom;
 
-  /// The number of lines above the viewport.
-  int get scrollBack => height - viewHeight;
+  /// The number of lines above the viewport. Never negative: `lines` is a
+  /// circular buffer capped at maxLines, so when the viewport is taller than
+  /// the buffer's content (`height < viewHeight`) `height - viewHeight` would
+  /// underflow and make `absoluteCursorY` negative → `lines[-N]` RangeError
+  /// (nimue#959). There is no scrollback in that state, so clamp at 0.
+  int get scrollBack => max(0, height - viewHeight);
 
   /// Vertical position of the cursor relative to the top of the buffer,
   /// starting from 0.

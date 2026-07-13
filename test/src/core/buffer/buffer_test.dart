@@ -264,4 +264,41 @@ void main() {
       expect(() => terminal.write('hello'), returnsNormally);
     });
   });
+
+  group('reflow duplicate-line crash (nimue#964)', () {
+    // reflow() reuses BufferLine instances and can emit the SAME instance at two
+    // rows; replaceWith then adopts it into two array slots. A later insert's
+    // _moveChild nulls one slot (a null hole) and _move()s the now-detached
+    // duplicate → "Null check operator used on a null value". Interleaved width
+    // reflows + lineFeeds at a scroll-region bottom margin reproduce it.
+    test('interleaved reflow + margin lineFeeds do not corrupt or crash', () {
+      final t = Terminal(maxLines: 40);
+      t.resize(20, 10);
+      for (var i = 0; i < 60; i++) {
+        t.write('row$i ${'x' * 45}\r\n');
+      }
+      for (final w in [8, 30, 6, 25, 12, 40, 10]) {
+        t.resize(w, 10);
+      }
+      t.write('\x1b[1;10r\x1b[10;1H'); // scroll region 1..10, cursor at bottom
+      for (var i = 0; i < 50; i++) {
+        t.write('feed$i\n');
+      }
+      for (final w in [7, 33, 9, 21]) {
+        t.resize(w, 8);
+        t.write('\x1b[1;8r\x1b[8;1H');
+        for (var i = 0; i < 20; i++) {
+          expect(() => t.write('z$i\n'), returnsNormally);
+        }
+      }
+      // Every row must be a distinct, present line — no null hole, no duplicate
+      // instance. `lines[i]` throws on a null-hole slot.
+      final seen = <int>{};
+      for (var i = 0; i < t.buffer.height; i++) {
+        final line = t.buffer.lines[i];
+        expect(seen.add(identityHashCode(line)), isTrue,
+            reason: 'row $i holds a duplicate BufferLine instance');
+      }
+    });
+  });
 }

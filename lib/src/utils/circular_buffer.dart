@@ -244,12 +244,19 @@ class IndexAwareCircularBuffer<T extends IndexedItem> {
       _dropChild(i);
     }
 
+    // Reset _startIndex BEFORE adopting, not after: the drop loops above use the
+    // old _startIndex to clear the right physical slots, but adoption must place
+    // logical index i at physical slot i. Resetting afterwards left the adopted
+    // items at old-cyclic offsets while the logical→physical map became identity
+    // — scrambling the buffer (null holes) once it had wrapped (_startIndex != 0)
+    // and later crashing an insert with a null-deref (nimue#964).
+    _startIndex = 0;
+
     final copyLength = replacement.length - copyStart;
     for (var i = 0; i < copyLength; i++) {
       _adoptChild(i, replacement[copyStart + i]);
     }
 
-    _startIndex = 0;
     _length = copyLength;
   }
 
